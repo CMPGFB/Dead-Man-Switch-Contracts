@@ -1,88 +1,88 @@
-;; Dead Man’s Switch Contract (Using Bitcoin UTXOs)
+;; Dead Man’s Switch Contract (Bitcoin UTXO Integration)
+;; Cultivated by Christopher Perceptions
 
-(define-data-var owner principal 'ST0000000000000000000000000000000000000000)
+;; Constants
+(define-constant ERR-NOT-INITIALIZED (err u100))
+(define-constant ERR-ALREADY-INITIALIZED (err u101))
+(define-constant ERR-NOT-OWNER (err u102))
+(define-constant ERR-NOT-BENEFICIARY (err u103))
+(define-constant ERR-INVALID-TIMEOUT (err u104))
+(define-constant ERR-TIMEOUT-NOT-REACHED (err u105))
+(define-constant ERR-NO-BITCOIN-UTXO (err u106))
+
+;; Data Variables
+(define-data-var owner principal tx-sender)
 (define-data-var beneficiary principal 'ST0000000000000000000000000000000000000000)
 (define-data-var btc-beneficiary (optional (tuple (address (buff 40)))) none)
-(define-data-var last-check-in int 0)
-(define-data-var timeout int 0)
+(define-data-var last-check-in uint u0)
+(define-data-var timeout uint u0)
 (define-data-var initialized bool false)
+(define-data-var btc-utxo (optional (tuple (txid (buff 32)) (index uint) (value uint))) none)
 
-;; ------------------------------------------
-;; Initialization Function
-;; ------------------------------------------
-(define-public (initialize (beneficiary principal) (btc-address (buff 40)) (timeout int))
+;; -------------------------------------------------------------------
+;; Initialization
+;; -------------------------------------------------------------------
+(define-public (initialize (new-beneficiary principal) (btc-address (buff 40)) (time-blocks uint))
   (begin
-    (if (var-get initialized)
-        (err "Already initialized")
-        (if (<= timeout 0)
-            (err "Timeout must be positive")
-            (begin
-              (var-set owner tx-sender)
-              (var-set beneficiary beneficiary)
-              (var-set btc-beneficiary (some {address: btc-address}))
-              (var-set timeout timeout)
-              (var-set last-check-in block-height)
-              (var-set initialized true)
-              (ok "Contract initialized")
-            )
-        )
-    )
+    (asserts! (not (var-get initialized)) ERR-ALREADY-INITIALIZED)
+    (asserts! (> time-blocks u0) ERR-INVALID-TIMEOUT)
+
+    (var-set owner tx-sender)
+    (var-set beneficiary new-beneficiary)
+    (var-set btc-beneficiary (some {address: btc-address}))
+    (var-set timeout time-blocks)
+    (var-set last-check-in block-height)
+    (var-set initialized true)
+    (ok "Contract initialized")
   )
 )
 
-;; ------------------------------------------
+;; -------------------------------------------------------------------
 ;; Owner Functions
-;; ------------------------------------------
-
-;; Owner must check in to prevent funds from transferring to the beneficiary
+;; -------------------------------------------------------------------
 (define-public (check-in)
   (begin
-    (if (is-eq tx-sender (var-get owner))
-        (begin
-          (var-set last-check-in block-height)
-          (ok block-height)
-        )
-        (err "Only owner can check in")
-    )
+    (asserts! (is-eq tx-sender (var-get owner)) ERR-NOT-OWNER)
+    (var-set last-check-in block-height)
+    (ok block-height)
   )
 )
 
-;; ------------------------------------------
-;; Bitcoin UTXO Interaction
-;; ------------------------------------------
-
-;; Function to deposit BTC to the contract-controlled UTXO
-(define-public (deposit-btc (amount int))
+;; Function to register a Bitcoin UTXO with the contract
+(define-public (register-btc-utxo (txid (buff 32)) (index uint) (value uint))
   (begin
-    (if (is-eq tx-sender (var-get owner))
-        (begin
-          (stx-transfer? amount tx-sender (contract-principal))
-          (ok "Bitcoin deposited")
-        )
-        (err "Only owner can deposit BTC")
-    )
+    (asserts! (is-eq tx-sender (var-get owner)) ERR-NOT-OWNER)
+    (var-set btc-utxo (some {txid: txid, index: index, value: value}))
+    (ok "Bitcoin UTXO registered")
   )
 )
 
-;; Function to send BTC to the beneficiary if the owner is inactive
+;; -------------------------------------------------------------------
+;; Trigger Dead Man’s Switch
+;; -------------------------------------------------------------------
 (define-public (trigger-switch)
   (let ((last-checked (var-get last-check-in))
         (timeout (var-get timeout))
+        (btc-utxo (var-get btc-utxo))
         (beneficiary (var-get btc-beneficiary)))
 
-    (if (some beneficiary)
-        (if (> (- block-height last-checked) timeout)
-            (begin
+    (begin
+      (asserts! (some beneficiary) (err "BTC beneficiary not set"))
+      (asserts! (some btc-utxo) ERR-NO-BITCOIN-UTXO)
+
+      (if (> (- block-height last-checked) timeout)
+          (begin
+            (match btc-utxo btc-utxo-data
               (match beneficiary btc-recipient
                 (begin
-                  (send-bitcoin (unwrap! btc-recipient "Invalid BTC address") (stx-get-balance (contract-principal)))
+                  (unwrap! (send-bitcoin (unwrap! btc-recipient "Invalid BTC address") (unwrap! btc-utxo-data.value ERR-NO-BITCOIN-UTXO)))
                   (ok "Bitcoin sent to beneficiary")
                 )
               )
             )
-            (err "Timeout not reached yet")
-        )
-        (err "Beneficiary BTC address not set")
+          )
+          ERR-TIMEOUT-NOT-REACHED
+      )
     )
   )
 )
