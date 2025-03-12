@@ -1,0 +1,6 @@
+<owner_pubkey> OP_CHECKSIG
+OP_IFDUP
+OP_NOTIF
+    <timeout> OP_CHECKSEQUENCEVERIFY OP_DROP
+    <beneficiary_pubkey> OP_CHECKSIG
+OP_ENDIF
