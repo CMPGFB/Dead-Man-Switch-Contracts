@@ -1,6 +1,6 @@
-<owner_pubkey> OP_CHECKSIG
-OP_IFDUP
-OP_NOTIF
-    <timeout> OP_CHECKSEQUENCEVERIFY OP_DROP
-    <beneficiary_pubkey> OP_CHECKSIG
+OP_IF
+    <Owner Public Key> OP_CHECKSIGVERIFY  # Owner can spend anytime
+OP_ELSE
+    <Timeout Unix Timestamp> OP_CHECKLOCKTIMEVERIFY OP_DROP
+    <Beneficiary Public Key> OP_CHECKSIG # Beneficiary can claim after timeout
 OP_ENDIF
