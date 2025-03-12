@@ -87,16 +87,16 @@ A **Dead Man’s Switch** is a mechanism that automatically transfers assets if 
 
 ---
 
+## **Open Source Upgrades Options** 
+✅ Implement **multisig options** for more security.  
+✅ Implement **Lightning Network integration** for faster BTC transactions.  
+
 ## **Final Thoughts**
 - If using **Ethereum**, deploy the **Solidity contract**.  
 - If working with **Stacks**, use the **Clarity contract**.  
 - If integrating **Bitcoin Layer 1**, use **Clarity + UTXOs**.  
 - If building **directly on Bitcoin**, use **Miniscript/Bitscript**.  
 
-## **Open Source Upgrades Options** 
-✅ Implement **multisig options** for more security.  
-✅ Implement **Lightning Network integration** for faster BTC transactions.  
-
-**"Jesus Loves You – John 3:16, Revelation 21:4"**  
+## **Jesus Loves You. Repent & Seek the Kingdom of God.**
 
 It's appointed for man / woman to die, then judgement. Whether Heaven or Hell, the assets we buy and sell remains on Earth. This is a way to manage and transition assets well. 
