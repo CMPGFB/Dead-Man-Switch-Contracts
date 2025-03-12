@@ -1,6 +1,6 @@
 # **Dead Man’s Switch Smart Contracts**  
 
-This repository contains multiple implementations of a **Dead Man’s Switch** contract across different blockchain technologies, including **Solidity (Ethereum), Clarity (Stacks), Clarity with Bitcoin UTXOs, and Bitcoin Script (Miniscript/Bitscript)**. All contracts have not been audited by a firm, so proceed with caution and do not use in a production environment without proper auditing, which may prevent loss of funds. 
+This repository contains multiple implementations of a **Dead Man’s Switch** contract across different blockchain technologies, including **Solidity (Ethereum), Clarity (Stacks), Clarity with Bitcoin UTXOs, and Bitcoin Script (Miniscript/Bitscript)**. All contracts have not been audited by a firm, so proceed with caution and do not use in a production environment without proper auditing, preventing loss of funds. 
 
 A **Dead Man’s Switch** is a mechanism that automatically transfers assets if the owner fails to check in within a certain timeframe.  
 
